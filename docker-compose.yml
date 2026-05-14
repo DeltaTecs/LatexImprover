@@ -1,0 +1,8 @@
+services:
+  latex-improver:
+    build:
+      context: .
+    container_name: latex-improver
+    ports:
+      - "8080:80"
+    restart: unless-stopped

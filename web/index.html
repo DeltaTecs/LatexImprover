@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LaTeX Improver</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>LaTeX Improver</h1>
+      <p>Paste your LaTeX code, then click format.</p>
+
+      <label for="latexInput">LaTeX Input</label>
+      <textarea id="latexInput" spellcheck="false" placeholder="\begin{equation}&#10;E = mc^2&#10;\end{equation}"></textarea>
+
+      <div class="actions">
+        <button id="formatButton" type="button">Format LaTeX</button>
+        <button id="copyButton" type="button">Copy Result</button>
+      </div>
+
+      <label for="latexOutput">Formatted Output</label>
+      <textarea id="latexOutput" spellcheck="false" readonly></textarea>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
