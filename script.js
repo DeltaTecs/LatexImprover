@@ -19,8 +19,15 @@ if (versionLabel) {
   versionLabel.textContent = `Version ${APP_VERSION}`;
 }
 
-const editor = createEditor(editorHost);
-const highlighter = createLineHighlighter(editor, CHANGED_LINE_CLASS);
+const editorState = createEditor(editorHost);
+const editor = editorState.instance;
+const highlighter = editorState.supportsHighlighting
+  ? createLineHighlighter(editor, CHANGED_LINE_CLASS)
+  : { clear: () => {}, highlightDiff: () => {} };
+
+if (editorState.isFallback) {
+  statusMessage.textContent = "Offline editor mode: using plain text area (no syntax or line highlighting).";
+}
 
 function getEditorValue() {
   return editor.getValue();
