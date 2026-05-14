@@ -42,6 +42,9 @@ function applyEditorTransform(transformFn, successMessage) {
   const result = transformFn(before);
   const hasDetailedResult = typeof result === "object" && result !== null && typeof result.text === "string";
   const after = hasDetailedResult ? result.text : result;
+
+  // Clear old line handles before replacing the full document to avoid stale highlights.
+  highlighter.clear();
   setEditorValue(after);
 
   if (hasDetailedResult && Array.isArray(result.changedLineIndexes)) {
@@ -88,8 +91,8 @@ fileInput.addEventListener("change", async () => {
 
   try {
     const content = await file.text();
-    setEditorValue(content);
     highlighter.clear();
+    setEditorValue(content);
     statusMessage.textContent = `Loaded file: ${file.name}`;
   } catch (_err) {
     statusMessage.textContent = "Could not read file.";
