@@ -11,7 +11,7 @@ function splitUnescapedComment(line) {
 
 function protectPattern(text, pattern, store) {
   return text.replace(pattern, (match) => {
-    const token = `@@PROTECTED_${store.length}@@`;
+    const token = `@@PROTECTED${store.length}@@`;
     store.push(match);
     return token;
   });
@@ -34,7 +34,7 @@ function protectMathParts(text) {
 }
 
 function restoreProtectedMathParts(text, store) {
-  return text.replace(/@@PROTECTED_(\d+)@@/g, (_match, index) => store[Number(index)] ?? _match);
+  return text.replace(/@@PROTECTED(\d+)@@/g, (_match, index) => store[Number(index)] ?? _match);
 }
 
 function formatMathExpressionSpacing(mathExpression, isDisplayMath) {
