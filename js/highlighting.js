@@ -121,6 +121,7 @@ export function createLineHighlighter(editor, changedLineClass) {
 
   return {
     clear,
+    highlight,
     highlightDiff,
   };
 }

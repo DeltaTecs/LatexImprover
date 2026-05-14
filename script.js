@@ -3,7 +3,7 @@ import { createEditor } from "./js/editor.js";
 import { createLineHighlighter, signalAppliedChange } from "./js/highlighting.js";
 import { applyExplicitSpacing } from "./js/formatters/explicitSpacing.js";
 import { markEquationContent } from "./js/formatters/equationContentMark.js";
-import { relabelLatex } from "./js/formatters/labeling.js";
+import { relabelLatexWithChanges } from "./js/formatters/labeling.js";
 
 const editorHost = document.getElementById("latexEditor");
 const operationSelect = document.getElementById("operationSelect");
@@ -23,7 +23,7 @@ const editorState = createEditor(editorHost);
 const editor = editorState.instance;
 const highlighter = editorState.supportsHighlighting
   ? createLineHighlighter(editor, CHANGED_LINE_CLASS)
-  : { clear: () => {}, highlightDiff: () => {} };
+  : { clear: () => {}, highlight: () => {}, highlightDiff: () => {} };
 
 if (editorState.isFallback) {
   statusMessage.textContent = "Offline editor mode: using plain text area (no syntax or line highlighting).";
@@ -39,9 +39,17 @@ function setEditorValue(value) {
 
 function applyEditorTransform(transformFn, successMessage) {
   const before = getEditorValue();
-  const after = transformFn(before);
+  const result = transformFn(before);
+  const hasDetailedResult = typeof result === "object" && result !== null && typeof result.text === "string";
+  const after = hasDetailedResult ? result.text : result;
   setEditorValue(after);
-  highlighter.highlightDiff(before, after);
+
+  if (hasDetailedResult && Array.isArray(result.changedLineIndexes)) {
+    highlighter.highlight(result.changedLineIndexes);
+  } else {
+    highlighter.highlightDiff(before, after);
+  }
+
   statusMessage.textContent = successMessage;
   signalAppliedChange(editorHost);
 }
@@ -50,7 +58,7 @@ formatButton.addEventListener("click", () => {
   const selected = operationSelect.value;
 
   if (selected === "labeling") {
-    applyEditorTransform(relabelLatex, "Labeling applied to the text.");
+    applyEditorTransform(relabelLatexWithChanges, "Labeling applied to the text.");
     return;
   }
 

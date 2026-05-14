@@ -7,7 +7,6 @@ import {
   SECTION_PATTERN,
   SUBSECTION_PATTERN,
   THEOREM_ENV_NAMES,
-  appendEnvironmentBlock,
   collectEnvironmentBlock,
   getIndent,
   removeInlineLabel,
@@ -48,15 +47,23 @@ function buildEquationLabelLines(indent, core) {
   return [`${indent}\\label{${core}}`];
 }
 
-export function relabelLatex(latexCode) {
+export function relabelLatexWithChanges(latexCode) {
   const lines = latexCode.replace(/\r\n/g, "\n").split("\n");
   const output = [];
+  const changedLineIndexes = [];
   let sectionIndex = 0;
   let subsectionIndex = 0;
   let theoremIndex = 0;
   let lemmaIndex = 0;
   let equationIndex = 0;
   let i = 0;
+
+  function pushLine(line, changed = false) {
+    output.push(line);
+    if (changed) {
+      changedLineIndexes.push(output.length - 1);
+    }
+  }
 
   while (i < lines.length) {
     const sourceLine = lines[i];
@@ -66,7 +73,7 @@ export function relabelLatex(latexCode) {
 
     if (sectionMatch) {
       const cleaned = removeInlineLabel(sourceLine);
-      output.push(cleaned);
+      pushLine(cleaned, cleaned !== sourceLine);
 
       if (!sectionMatch[1]) {
         sectionIndex += 1;
@@ -76,7 +83,7 @@ export function relabelLatex(latexCode) {
         equationIndex = 0;
         const indent = getIndent(cleaned);
         const romanSection = toRoman(sectionIndex);
-        output.push(`${indent}\\label{sec-${romanSection}}`);
+        pushLine(`${indent}\\label{sec-${romanSection}}`, true);
       }
 
       i = skipFollowingLabelOnlyLines(lines, i + 1);
@@ -85,13 +92,13 @@ export function relabelLatex(latexCode) {
 
     if (subsectionMatch) {
       const cleaned = removeInlineLabel(sourceLine);
-      output.push(cleaned);
+      pushLine(cleaned, cleaned !== sourceLine);
 
       if (!subsectionMatch[1]) {
         subsectionIndex += 1;
         const indent = getIndent(cleaned);
         const romanSection = toRoman(sectionIndex || 1);
-        output.push(`${indent}\\label{subsec-${romanSection}.${subsectionIndex}}`);
+        pushLine(`${indent}\\label{subsec-${romanSection}.${subsectionIndex}}`, true);
       }
 
       i = skipFollowingLabelOnlyLines(lines, i + 1);
@@ -106,6 +113,7 @@ export function relabelLatex(latexCode) {
       if (THEOREM_ENV_NAMES.has(bareEnvName)) {
         const block = collectEnvironmentBlock(lines, i, envName);
         const labelLines = [];
+        const startWasChanged = block.startLine !== lines[i];
 
         if (!isStarred) {
           theoremIndex += 1;
@@ -114,7 +122,16 @@ export function relabelLatex(latexCode) {
           labelLines.push(`${indent}\\label{thm-${romanSection}.${theoremIndex}}`);
         }
 
-        appendEnvironmentBlock(output, block, labelLines);
+        pushLine(block.startLine, startWasChanged);
+        for (const labelLine of labelLines) {
+          pushLine(labelLine, true);
+        }
+        for (const innerLine of block.innerLines) {
+          pushLine(innerLine);
+        }
+        if (block.hasEndLine) {
+          pushLine(block.endLine);
+        }
         i = skipFollowingLabelOnlyLines(lines, block.endIndex + 1);
         continue;
       }
@@ -122,6 +139,7 @@ export function relabelLatex(latexCode) {
       if (LEMMA_ENV_NAMES.has(bareEnvName)) {
         const block = collectEnvironmentBlock(lines, i, envName);
         const labelLines = [];
+        const startWasChanged = block.startLine !== lines[i];
 
         if (!isStarred) {
           lemmaIndex += 1;
@@ -130,7 +148,16 @@ export function relabelLatex(latexCode) {
           labelLines.push(`${indent}\\label{lem-${romanSection}.${lemmaIndex}}`);
         }
 
-        appendEnvironmentBlock(output, block, labelLines);
+        pushLine(block.startLine, startWasChanged);
+        for (const labelLine of labelLines) {
+          pushLine(labelLine, true);
+        }
+        for (const innerLine of block.innerLines) {
+          pushLine(innerLine);
+        }
+        if (block.hasEndLine) {
+          pushLine(block.endLine);
+        }
         i = skipFollowingLabelOnlyLines(lines, block.endIndex + 1);
         continue;
       }
@@ -138,6 +165,7 @@ export function relabelLatex(latexCode) {
       if (EQUATION_ENV_NAMES.has(bareEnvName)) {
         const block = collectEnvironmentBlock(lines, i, envName);
         const labelLines = [];
+        const startWasChanged = block.startLine !== lines[i];
 
         if (!isStarred) {
           equationIndex += 1;
@@ -147,7 +175,16 @@ export function relabelLatex(latexCode) {
           labelLines.push(...buildEquationLabelLines(indent, core));
         }
 
-        appendEnvironmentBlock(output, block, labelLines);
+        pushLine(block.startLine, startWasChanged);
+        for (const labelLine of labelLines) {
+          pushLine(labelLine, true);
+        }
+        for (const innerLine of block.innerLines) {
+          pushLine(innerLine);
+        }
+        if (block.hasEndLine) {
+          pushLine(block.endLine);
+        }
         i = skipFollowingLabelOnlyLines(lines, block.endIndex + 1);
         continue;
       }
@@ -158,15 +195,23 @@ export function relabelLatex(latexCode) {
         .replace(MANAGED_LABEL_GLOBAL_PATTERN, "")
         .replace(/[ \t]+$/g, "");
       if (stripped.trim()) {
-        output.push(stripped);
+        pushLine(stripped, stripped !== sourceLine);
       }
       i += 1;
       continue;
     }
 
-    output.push(sourceLine);
+    pushLine(sourceLine);
     i += 1;
   }
 
-  return `${output.join("\n").replace(/\n{3,}/g, "\n\n").trim()}\n`;
+  const text = `${output.join("\n").replace(/\n{3,}/g, "\n\n").trim()}\n`;
+  return {
+    text,
+    changedLineIndexes,
+  };
+}
+
+export function relabelLatex(latexCode) {
+  return relabelLatexWithChanges(latexCode).text;
 }
