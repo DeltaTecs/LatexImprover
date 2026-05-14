@@ -1,6 +1,7 @@
 import { APP_VERSION, CHANGED_LINE_CLASS } from "./js/config.js";
 import { createEditor } from "./js/editor.js";
 import { createLineHighlighter, signalAppliedChange } from "./js/highlighting.js";
+import { applyEnDashNames } from "./js/formatters/enDashNames.js";
 import { applyExplicitSpacing } from "./js/formatters/explicitSpacing.js";
 import { markEquationContent } from "./js/formatters/equationContentMark.js";
 import { relabelLatex } from "./js/formatters/labeling.js";
@@ -77,8 +78,13 @@ formatButton.addEventListener("click", () => {
     return;
   }
 
+  if (selected === "en-dash-names") {
+    applyEditorTransform(applyEnDashNames, "En-dash name compounds applied to the text.");
+    return;
+  }
+
   highlighter.clear();
-  statusMessage.textContent = "Math formatting is not implemented yet.";
+  statusMessage.textContent = "Selected formatting operation is not available.";
 });
 
 uploadButton.addEventListener("click", () => {

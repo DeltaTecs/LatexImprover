@@ -9,7 +9,6 @@ import {
   THEOREM_ENV_NAMES,
   appendEnvironmentBlock,
   collectEnvironmentBlock,
-  getIndent,
   removeInlineLabel,
   skipFollowingLabelOnlyLines,
 } from "./shared.js";
@@ -44,8 +43,43 @@ function toRoman(num) {
   return out;
 }
 
-function buildEquationLabelLines(indent, core) {
-  return [`${indent}\\label{${core}}`];
+function buildLabel(core) {
+  return `\\label{${core}}`;
+}
+
+function splitUnescapedComment(line) {
+  for (let i = 0; i < line.length; i += 1) {
+    if (line[i] === "%" && line[i - 1] !== "\\") {
+      return [line.slice(0, i), line.slice(i)];
+    }
+  }
+
+  return [line, ""];
+}
+
+function appendInlineLabel(line, label) {
+  if (!label) {
+    return line;
+  }
+
+  const [content, comment] = splitUnescapedComment(line);
+  const labeledContent = `${content.replace(/[ \t]+$/g, "")} ${label}`;
+  if (!comment) {
+    return labeledContent;
+  }
+
+  return `${labeledContent} ${comment}`;
+}
+
+function withStartLineLabel(block, label) {
+  if (!label) {
+    return block;
+  }
+
+  return {
+    ...block,
+    startLine: appendInlineLabel(block.startLine, label),
+  };
 }
 
 export function relabelLatex(latexCode) {
@@ -66,7 +100,7 @@ export function relabelLatex(latexCode) {
 
     if (sectionMatch) {
       const cleaned = removeInlineLabel(sourceLine);
-      output.push(cleaned);
+      let label = "";
 
       if (!sectionMatch[1]) {
         sectionIndex += 1;
@@ -74,26 +108,26 @@ export function relabelLatex(latexCode) {
         theoremIndex = 0;
         lemmaIndex = 0;
         equationIndex = 0;
-        const indent = getIndent(cleaned);
         const romanSection = toRoman(sectionIndex);
-        output.push(`${indent}\\label{sec-${romanSection}}`);
+        label = buildLabel(`sec-${romanSection}`);
       }
 
+      output.push(appendInlineLabel(cleaned, label));
       i = skipFollowingLabelOnlyLines(lines, i + 1);
       continue;
     }
 
     if (subsectionMatch) {
       const cleaned = removeInlineLabel(sourceLine);
-      output.push(cleaned);
+      let label = "";
 
       if (!subsectionMatch[1]) {
         subsectionIndex += 1;
-        const indent = getIndent(cleaned);
         const romanSection = toRoman(sectionIndex || 1);
-        output.push(`${indent}\\label{subsec-${romanSection}.${subsectionIndex}}`);
+        label = buildLabel(`subsec-${romanSection}.${subsectionIndex}`);
       }
 
+      output.push(appendInlineLabel(cleaned, label));
       i = skipFollowingLabelOnlyLines(lines, i + 1);
       continue;
     }
@@ -105,49 +139,46 @@ export function relabelLatex(latexCode) {
 
       if (THEOREM_ENV_NAMES.has(bareEnvName)) {
         const block = collectEnvironmentBlock(lines, i, envName);
-        const labelLines = [];
+        let label = "";
 
         if (!isStarred) {
           theoremIndex += 1;
-          const indent = getIndent(block.startLine);
           const romanSection = toRoman(sectionIndex || 1);
-          labelLines.push(`${indent}\\label{thm-${romanSection}.${theoremIndex}}`);
+          label = buildLabel(`thm-${romanSection}.${theoremIndex}`);
         }
 
-        appendEnvironmentBlock(output, block, labelLines);
+        appendEnvironmentBlock(output, withStartLineLabel(block, label));
         i = skipFollowingLabelOnlyLines(lines, block.endIndex + 1);
         continue;
       }
 
       if (LEMMA_ENV_NAMES.has(bareEnvName)) {
         const block = collectEnvironmentBlock(lines, i, envName);
-        const labelLines = [];
+        let label = "";
 
         if (!isStarred) {
           lemmaIndex += 1;
-          const indent = getIndent(block.startLine);
           const romanSection = toRoman(sectionIndex || 1);
-          labelLines.push(`${indent}\\label{lem-${romanSection}.${lemmaIndex}}`);
+          label = buildLabel(`lem-${romanSection}.${lemmaIndex}`);
         }
 
-        appendEnvironmentBlock(output, block, labelLines);
+        appendEnvironmentBlock(output, withStartLineLabel(block, label));
         i = skipFollowingLabelOnlyLines(lines, block.endIndex + 1);
         continue;
       }
 
       if (EQUATION_ENV_NAMES.has(bareEnvName)) {
         const block = collectEnvironmentBlock(lines, i, envName);
-        const labelLines = [];
+        let label = "";
 
         if (!isStarred) {
           equationIndex += 1;
-          const indent = getIndent(block.startLine);
           const romanSection = toRoman(sectionIndex || 1);
           const core = `eq-${romanSection}.${equationIndex}`;
-          labelLines.push(...buildEquationLabelLines(indent, core));
+          label = buildLabel(core);
         }
 
-        appendEnvironmentBlock(output, block, labelLines);
+        appendEnvironmentBlock(output, withStartLineLabel(block, label));
         i = skipFollowingLabelOnlyLines(lines, block.endIndex + 1);
         continue;
       }
