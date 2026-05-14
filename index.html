@@ -18,6 +18,7 @@
           <select id="operationSelect" aria-label="Operation">
             <option value="labeling">Labeling</option>
             <option value="equation-content-mark">Equation Content Mark (%)</option>
+            <option value="explicit-spacing">Explicit Spacing (\ )</option>
             <option value="math-formatting">Math Formatting (Not Implemented)</option>
           </select>
           <input id="fileInput" type="file" accept=".tex,.txt,.latex" hidden />
@@ -36,6 +37,6 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/stex/stex.min.js"></script>
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
   </body>
 </html>
