@@ -53,24 +53,47 @@ function splitUnescapedComment(text) {
   return text;
 }
 
-function countImportantEquationLines(lines) {
-  let count = 0;
+function countRowBreakCommands(text) {
+  let backslashRun = 0;
+  let breaks = 0;
 
-  for (const rawLine of lines) {
-    const noComment = splitUnescapedComment(removeInlineLabel(rawLine)).trim();
-    if (!noComment) {
+  for (const char of text) {
+    if (char === "\\") {
+      backslashRun += 1;
       continue;
     }
 
-    const chunks = noComment
-      .split(/\\\\/)
-      .map((chunk) => chunk.trim())
-      .filter((chunk) => chunk.length > 0);
-
-    count += chunks.length > 0 ? chunks.length : 1;
+    if (backslashRun > 0) {
+      breaks += Math.floor(backslashRun / 2);
+      backslashRun = 0;
+    }
   }
 
-  return Math.max(1, count);
+  if (backslashRun > 0) {
+    breaks += Math.floor(backslashRun / 2);
+  }
+
+  return breaks;
+}
+
+function countImportantEquationLines(lines) {
+  let hasMathContent = false;
+  let rowBreaks = 0;
+
+  for (const rawLine of lines) {
+    const noComment = splitUnescapedComment(removeInlineLabel(rawLine));
+    if (noComment.trim()) {
+      hasMathContent = true;
+    }
+
+    rowBreaks += countRowBreakCommands(noComment);
+  }
+
+  if (!hasMathContent) {
+    return 1;
+  }
+
+  return Math.max(1, rowBreaks + 1);
 }
 
 function findEnvironmentEnd(lines, startIndex, envName) {
