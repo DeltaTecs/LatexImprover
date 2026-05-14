@@ -1,0 +1,8 @@
+{
+  email {$TLS_EMAIL}
+}
+
+{$SITE_ADDRESS:localhost} {
+  encode zstd gzip
+  reverse_proxy web:8080
+}
