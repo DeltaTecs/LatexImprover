@@ -9,15 +9,25 @@
   <body>
     <main class="container">
       <h1>LaTeX Improver</h1>
-      <p>Paste your LaTeX code, then click format.</p>
+      <p>Paste your LaTeX code, select an operation, and apply it.</p>
+
+      <label for="operationSelect">Operation</label>
+      <select id="operationSelect">
+        <option value="labeling">Labeling</option>
+        <option value="math-formatting">Math Formatting (Not Implemented)</option>
+      </select>
 
       <label for="latexInput">LaTeX Input</label>
       <textarea id="latexInput" spellcheck="false" placeholder="\begin{equation}&#10;E = mc^2&#10;\end{equation}"></textarea>
 
       <div class="actions">
-        <button id="formatButton" type="button">Format LaTeX</button>
+        <input id="fileInput" type="file" accept=".tex,.txt,.latex" hidden />
+        <button id="uploadButton" type="button">Upload File</button>
+        <button id="formatButton" type="button">Apply Operation</button>
         <button id="copyButton" type="button">Copy Result</button>
+        <button id="downloadButton" type="button">Download Output</button>
       </div>
+      <p id="statusMessage" class="status"></p>
 
       <label for="latexOutput">Formatted Output</label>
       <textarea id="latexOutput" spellcheck="false" readonly></textarea>

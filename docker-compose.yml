@@ -3,6 +3,26 @@ services:
     build:
       context: .
     container_name: latex-improver
-    ports:
-      - "8080:80"
+    expose:
+      - "80"
     restart: unless-stopped
+
+  caddy:
+    image: caddy:2.9-alpine
+    container_name: latex-improver-proxy
+    depends_on:
+      - latex-improver
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - CADDY_DOMAIN=${CADDY_DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

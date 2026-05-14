@@ -1,0 +1,4 @@
+{$CADDY_DOMAIN:localhost} {
+  reverse_proxy latex-improver:80
+  encode zstd gzip
+}

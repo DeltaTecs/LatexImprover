@@ -18,12 +18,14 @@ body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(140deg, #eef3ff 0%, var(--bg) 50%, #e9f5ff 100%);
   color: var(--text);
+  min-height: 100vh;
 }
 
 .container {
-  max-width: 900px;
-  margin: 2.5rem auto;
-  padding: 1.5rem;
+  width: calc(100vw - 2rem);
+  max-width: none;
+  margin: 1rem;
+  padding: 1.25rem;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -46,9 +48,19 @@ label {
   font-weight: 600;
 }
 
+select {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #fbfdff;
+  color: var(--text);
+  font-size: 14px;
+}
+
 textarea {
   width: 100%;
-  min-height: 220px;
+  min-height: 38vh;
   padding: 0.85rem;
   border-radius: 8px;
   border: 1px solid var(--border);
@@ -62,8 +74,16 @@ textarea {
 
 .actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.8rem;
   margin-top: 1rem;
+}
+
+.status {
+  min-height: 1.2rem;
+  margin: 0.7rem 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
 }
 
 button {
@@ -85,9 +105,14 @@ button:hover {
   .container {
     margin: 1rem;
     padding: 1rem;
+    width: calc(100vw - 2rem);
   }
 
   .actions {
     flex-direction: column;
+  }
+
+  textarea {
+    min-height: 42vh;
   }
 }
