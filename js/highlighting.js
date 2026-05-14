@@ -37,21 +37,28 @@ function buildCoarseChangedLines(beforeLines, afterLines) {
 function buildExactChangedLines(beforeLines, afterLines) {
   const beforeCount = beforeLines.length;
   const afterCount = afterLines.length;
-  const dp = Array.from({ length: beforeCount + 1 }, () => new Uint32Array(afterCount + 1));
+  const highlightCost = (beforeCount + afterCount) * (beforeCount + afterCount + 1) + 1;
+  const dp = Array.from({ length: beforeCount + 1 }, () => new Float64Array(afterCount + 1));
 
-  // Minimize highlighted result lines; skipped source lines are deletions.
   for (let afterIndex = afterCount - 1; afterIndex >= 0; afterIndex -= 1) {
-    dp[beforeCount][afterIndex] = dp[beforeCount][afterIndex + 1] + 1;
+    dp[beforeCount][afterIndex] = dp[beforeCount][afterIndex + 1] + highlightCost;
   }
 
   for (let beforeIndex = beforeCount - 1; beforeIndex >= 0; beforeIndex -= 1) {
     dp[beforeIndex][afterCount] = 0;
     for (let afterIndex = afterCount - 1; afterIndex >= 0; afterIndex -= 1) {
+      const skipRemovedBeforeLine = dp[beforeIndex + 1][afterIndex];
+      const markResultLine = dp[beforeIndex][afterIndex + 1] + highlightCost;
+
       if (beforeLines[beforeIndex] === afterLines[afterIndex]) {
-        dp[beforeIndex][afterIndex] = dp[beforeIndex + 1][afterIndex + 1];
+        const keepUnchangedLine =
+          dp[beforeIndex + 1][afterIndex + 1] + Math.abs(beforeIndex - afterIndex);
+        dp[beforeIndex][afterIndex] = Math.min(
+          keepUnchangedLine,
+          skipRemovedBeforeLine,
+          markResultLine
+        );
       } else {
-        const skipRemovedBeforeLine = dp[beforeIndex + 1][afterIndex];
-        const markResultLine = dp[beforeIndex][afterIndex + 1] + 1;
         dp[beforeIndex][afterIndex] = Math.min(skipRemovedBeforeLine, markResultLine);
       }
     }
@@ -63,18 +70,22 @@ function buildExactChangedLines(beforeLines, afterLines) {
 
   while (beforeIndex < beforeCount && afterIndex < afterCount) {
     if (beforeLines[beforeIndex] === afterLines[afterIndex]) {
-      beforeIndex += 1;
-      afterIndex += 1;
-      continue;
+      const keepUnchangedLine =
+        dp[beforeIndex + 1][afterIndex + 1] + Math.abs(beforeIndex - afterIndex);
+      if (keepUnchangedLine <= dp[beforeIndex][afterIndex]) {
+        beforeIndex += 1;
+        afterIndex += 1;
+        continue;
+      }
     }
 
     const skipRemovedBeforeLine = dp[beforeIndex + 1][afterIndex];
-    const markResultLine = dp[beforeIndex][afterIndex + 1] + 1;
-    if (skipRemovedBeforeLine <= markResultLine) {
-      beforeIndex += 1;
-    } else {
+    const markResultLine = dp[beforeIndex][afterIndex + 1] + highlightCost;
+    if (markResultLine <= skipRemovedBeforeLine) {
       changed.push(afterIndex);
       afterIndex += 1;
+    } else {
+      beforeIndex += 1;
     }
   }
 
@@ -90,16 +101,29 @@ export function getChangedResultLineIndexes(beforeText, afterText) {
   const beforeLines = splitLines(beforeText);
   const afterLines = splitLines(afterText);
   let start = 0;
-  let beforeEnd = beforeLines.length - 1;
-  let afterEnd = afterLines.length - 1;
+  const beforeLastIndex = beforeLines.length - 1;
+  const afterLastIndex = afterLines.length - 1;
 
   while (
-    start <= beforeEnd &&
-    start <= afterEnd &&
+    start <= beforeLastIndex &&
+    start <= afterLastIndex &&
     beforeLines[start] === afterLines[start]
   ) {
     start += 1;
   }
+
+  const beforeRemainder = beforeLines.slice(start);
+  const afterRemainder = afterLines.slice(start);
+  const remainderCells = beforeRemainder.length * afterRemainder.length;
+
+  if (remainderCells <= MAX_EXACT_DIFF_CELLS) {
+    return buildExactChangedLines(beforeRemainder, afterRemainder).map(
+      (lineIndex) => lineIndex + start
+    );
+  }
+
+  let beforeEnd = beforeLastIndex;
+  let afterEnd = afterLastIndex;
 
   while (
     beforeEnd >= start &&

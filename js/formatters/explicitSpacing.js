@@ -34,7 +34,21 @@ function protectMathParts(text) {
 }
 
 function restoreProtectedMathParts(text, store) {
-  return text.replace(/@@PROTECTED(\d+)@@/g, (_match, index) => store[Number(index)] ?? _match);
+  let restored = text;
+
+  for (let pass = 0; pass <= store.length; pass += 1) {
+    const next = restored.replace(/@@PROTECTED(\d+)@@/g, (_match, index) => {
+      return store[Number(index)] ?? _match;
+    });
+
+    if (next === restored) {
+      return restored;
+    }
+
+    restored = next;
+  }
+
+  return restored;
 }
 
 function formatMathExpressionSpacing(mathExpression, isDisplayMath) {

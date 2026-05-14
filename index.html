@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div id="formatCompleteIndicator" class="format-complete-indicator" aria-hidden="true"></div>
     <main class="app-shell">
       <div class="toolbar">
         <div class="toolbar-title">LaTeX Improver</div>
@@ -19,7 +20,6 @@
             <option value="labeling">Labeling</option>
             <option value="equation-content-mark">Equation Content Mark (%)</option>
             <option value="explicit-spacing">Explicit Spacing (\ )</option>
-            <option value="math-formatting">Math Formatting (Not Implemented)</option>
           </select>
           <input id="fileInput" type="file" accept=".tex,.txt,.latex" hidden />
           <button id="uploadButton" type="button">Upload</button>

@@ -9,6 +9,7 @@ const editorHost = document.getElementById("latexEditor");
 const operationSelect = document.getElementById("operationSelect");
 const statusMessage = document.getElementById("statusMessage");
 const versionLabel = document.getElementById("versionLabel");
+const formatCompleteIndicator = document.getElementById("formatCompleteIndicator");
 const fileInput = document.getElementById("fileInput");
 const uploadButton = document.getElementById("uploadButton");
 const formatButton = document.getElementById("formatButton");
@@ -37,6 +38,16 @@ function setEditorValue(value) {
   editor.setValue(value);
 }
 
+function signalFormatComplete() {
+  if (!formatCompleteIndicator) {
+    return;
+  }
+
+  formatCompleteIndicator.classList.remove("is-visible");
+  void formatCompleteIndicator.offsetWidth;
+  formatCompleteIndicator.classList.add("is-visible");
+}
+
 function applyEditorTransform(transformFn, successMessage) {
   const before = getEditorValue();
   const after = transformFn(before);
@@ -45,6 +56,7 @@ function applyEditorTransform(transformFn, successMessage) {
   highlighter.highlightFormatResult(before, after);
   statusMessage.textContent = successMessage;
   signalAppliedChange(editorHost);
+  signalFormatComplete();
 }
 
 formatButton.addEventListener("click", () => {
