@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LaTeX Improver</title>
+    <title>LaTeX Format Enhancer</title>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css"
@@ -14,7 +14,7 @@
     <div id="formatCompleteIndicator" class="format-complete-indicator" aria-hidden="true"></div>
     <main class="app-shell">
       <div class="toolbar">
-        <div class="toolbar-title">LaTeX Improver</div>
+        <div class="toolbar-title">LaTeX Format Enhancer</div>
         <div class="toolbar-controls">
           <select id="operationSelect" aria-label="Operation">
             <option value="labeling">Labeling</option>
@@ -27,11 +27,28 @@
           <button id="formatButton" type="button">Apply</button>
           <button id="copyButton" type="button">Copy</button>
           <button id="downloadButton" type="button">Download</button>
+          <button id="helpButton" type="button">Help</button>
         </div>
       </div>
       <p id="statusMessage" class="status" aria-live="polite"></p>
       <div id="latexEditor" class="editor"></div>
     </main>
+    <dialog id="helpDialog" class="help-dialog">
+      <div class="help-dialog-content">
+        <h2>LaTeX Format Enhancer Help</h2>
+        <p>
+          Paste or upload LaTeX, choose a formatter, and press Apply. Changed result lines are
+          marked with a green background.
+        </p>
+        <ul>
+          <li>Labeling adds managed inline labels to sections and supported environments.</li>
+          <li>Equation Content Mark (%) wraps equation-like environments with percent marker lines.</li>
+          <li>Explicit Spacing normalizes spacing inside math content.</li>
+          <li>En-Dash Names converts compound names like Pauli-Fierz to Pauli--Fierz.</li>
+        </ul>
+        <button id="helpCloseButton" type="button">Close</button>
+      </div>
+    </dialog>
     <footer class="app-footer">
       <small id="versionLabel">Version</small>
     </footer>

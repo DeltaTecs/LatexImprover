@@ -1,6 +1,10 @@
 import { APP_VERSION, CHANGED_LINE_CLASS } from "./js/config.js";
 import { createEditor } from "./js/editor.js";
-import { createLineHighlighter, signalAppliedChange } from "./js/highlighting.js";
+import {
+  createLineHighlighter,
+  getChangedResultLineIndexes,
+  signalAppliedChange,
+} from "./js/highlighting.js";
 import { applyEnDashNames } from "./js/formatters/enDashNames.js";
 import { applyExplicitSpacing } from "./js/formatters/explicitSpacing.js";
 import { markEquationContent } from "./js/formatters/equationContentMark.js";
@@ -16,6 +20,9 @@ const uploadButton = document.getElementById("uploadButton");
 const formatButton = document.getElementById("formatButton");
 const copyButton = document.getElementById("copyButton");
 const downloadButton = document.getElementById("downloadButton");
+const helpButton = document.getElementById("helpButton");
+const helpDialog = document.getElementById("helpDialog");
+const helpCloseButton = document.getElementById("helpCloseButton");
 
 if (versionLabel) {
   versionLabel.textContent = `Version ${APP_VERSION}`;
@@ -49,15 +56,34 @@ function signalFormatComplete() {
   formatCompleteIndicator.classList.add("is-visible");
 }
 
+function formatChangedLineCount(count) {
+  return `${count} ${count === 1 ? "line" : "lines"} changed.`;
+}
+
 function applyEditorTransform(transformFn, successMessage) {
   const before = getEditorValue();
   const after = transformFn(before);
+  const changedLineIndexes = getChangedResultLineIndexes(before, after);
   highlighter.clear();
   setEditorValue(after);
-  highlighter.highlightFormatResult(before, after);
-  statusMessage.textContent = successMessage;
+  highlighter.highlight(changedLineIndexes);
+  statusMessage.textContent =
+    `${successMessage} ${formatChangedLineCount(changedLineIndexes.length)}`;
   signalAppliedChange(editorHost);
   signalFormatComplete();
+}
+
+function closeHelpDialog() {
+  if (!helpDialog) {
+    return;
+  }
+
+  if (typeof helpDialog.close === "function") {
+    helpDialog.close();
+    return;
+  }
+
+  helpDialog.removeAttribute("open");
 }
 
 formatButton.addEventListener("click", () => {
@@ -86,6 +112,35 @@ formatButton.addEventListener("click", () => {
   highlighter.clear();
   statusMessage.textContent = "Selected formatting operation is not available.";
 });
+
+if (helpButton && helpDialog) {
+  helpButton.addEventListener("click", () => {
+    if (helpDialog.open) {
+      return;
+    }
+
+    if (typeof helpDialog.showModal === "function") {
+      helpDialog.showModal();
+      return;
+    }
+
+    helpDialog.setAttribute("open", "");
+  });
+}
+
+if (helpCloseButton && helpDialog) {
+  helpCloseButton.addEventListener("click", () => {
+    closeHelpDialog();
+  });
+}
+
+if (helpDialog) {
+  helpDialog.addEventListener("click", (event) => {
+    if (event.target === helpDialog) {
+      closeHelpDialog();
+    }
+  });
+}
 
 uploadButton.addEventListener("click", () => {
   fileInput.click();
