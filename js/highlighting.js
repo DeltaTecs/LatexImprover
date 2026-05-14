@@ -1,5 +1,9 @@
 const MAX_EXACT_DIFF_CELLS = 2000000;
 
+function splitLines(text) {
+  return text.replace(/\r\n/g, "\n").split("\n");
+}
+
 function buildCoarseChangedLines(beforeLines, afterLines) {
   let start = 0;
   let beforeEnd = beforeLines.length - 1;
@@ -31,65 +35,93 @@ function buildCoarseChangedLines(beforeLines, afterLines) {
 }
 
 function buildExactChangedLines(beforeLines, afterLines) {
-  const n = beforeLines.length;
-  const m = afterLines.length;
-  const dp = Array.from({ length: n + 1 }, () => new Uint32Array(m + 1));
+  const beforeCount = beforeLines.length;
+  const afterCount = afterLines.length;
+  const dp = Array.from({ length: beforeCount + 1 }, () => new Uint32Array(afterCount + 1));
 
-  // dp[i][j] = minimum number of "after" lines to highlight from suffixes.
-  for (let j = m - 1; j >= 0; j -= 1) {
-    dp[n][j] = dp[n][j + 1] + 1;
+  // Minimize highlighted result lines; skipped source lines are deletions.
+  for (let afterIndex = afterCount - 1; afterIndex >= 0; afterIndex -= 1) {
+    dp[beforeCount][afterIndex] = dp[beforeCount][afterIndex + 1] + 1;
   }
 
-  for (let i = n - 1; i >= 0; i -= 1) {
-    dp[i][m] = 0;
-    for (let j = m - 1; j >= 0; j -= 1) {
-      if (beforeLines[i] === afterLines[j]) {
-        dp[i][j] = dp[i + 1][j + 1];
+  for (let beforeIndex = beforeCount - 1; beforeIndex >= 0; beforeIndex -= 1) {
+    dp[beforeIndex][afterCount] = 0;
+    for (let afterIndex = afterCount - 1; afterIndex >= 0; afterIndex -= 1) {
+      if (beforeLines[beforeIndex] === afterLines[afterIndex]) {
+        dp[beforeIndex][afterIndex] = dp[beforeIndex + 1][afterIndex + 1];
       } else {
-        const skipBefore = dp[i + 1][j];
-        const markAfter = dp[i][j + 1] + 1;
-        dp[i][j] = Math.min(skipBefore, markAfter);
+        const skipRemovedBeforeLine = dp[beforeIndex + 1][afterIndex];
+        const markResultLine = dp[beforeIndex][afterIndex + 1] + 1;
+        dp[beforeIndex][afterIndex] = Math.min(skipRemovedBeforeLine, markResultLine);
       }
     }
   }
 
   const changed = [];
-  let i = 0;
-  let j = 0;
+  let beforeIndex = 0;
+  let afterIndex = 0;
 
-  while (i < n && j < m) {
-    if (beforeLines[i] === afterLines[j]) {
-      i += 1;
-      j += 1;
+  while (beforeIndex < beforeCount && afterIndex < afterCount) {
+    if (beforeLines[beforeIndex] === afterLines[afterIndex]) {
+      beforeIndex += 1;
+      afterIndex += 1;
       continue;
     }
 
-    if (dp[i + 1][j] <= dp[i][j + 1] + 1) {
-      i += 1;
+    const skipRemovedBeforeLine = dp[beforeIndex + 1][afterIndex];
+    const markResultLine = dp[beforeIndex][afterIndex + 1] + 1;
+    if (skipRemovedBeforeLine <= markResultLine) {
+      beforeIndex += 1;
     } else {
-      changed.push(j);
-      j += 1;
+      changed.push(afterIndex);
+      afterIndex += 1;
     }
   }
 
-  while (j < m) {
-    changed.push(j);
-    j += 1;
+  while (afterIndex < afterCount) {
+    changed.push(afterIndex);
+    afterIndex += 1;
   }
 
   return changed;
 }
 
-function computeChangedNewLineIndexes(beforeText, afterText) {
-  const beforeLines = beforeText.replace(/\r\n/g, "\n").split("\n");
-  const afterLines = afterText.replace(/\r\n/g, "\n").split("\n");
-  const cells = beforeLines.length * afterLines.length;
+export function getChangedResultLineIndexes(beforeText, afterText) {
+  const beforeLines = splitLines(beforeText);
+  const afterLines = splitLines(afterText);
+  let start = 0;
+  let beforeEnd = beforeLines.length - 1;
+  let afterEnd = afterLines.length - 1;
 
-  if (cells > MAX_EXACT_DIFF_CELLS) {
-    return buildCoarseChangedLines(beforeLines, afterLines);
+  while (
+    start <= beforeEnd &&
+    start <= afterEnd &&
+    beforeLines[start] === afterLines[start]
+  ) {
+    start += 1;
   }
 
-  return buildExactChangedLines(beforeLines, afterLines);
+  while (
+    beforeEnd >= start &&
+    afterEnd >= start &&
+    beforeLines[beforeEnd] === afterLines[afterEnd]
+  ) {
+    beforeEnd -= 1;
+    afterEnd -= 1;
+  }
+
+  if (afterEnd < start) {
+    return [];
+  }
+
+  const beforeMiddle = beforeLines.slice(start, beforeEnd + 1);
+  const afterMiddle = afterLines.slice(start, afterEnd + 1);
+  const cells = beforeMiddle.length * afterMiddle.length;
+  const changedMiddleLines = cells > MAX_EXACT_DIFF_CELLS
+    ? buildCoarseChangedLines(beforeMiddle, afterMiddle)
+    : buildExactChangedLines(beforeMiddle, afterMiddle);
+
+  return changedMiddleLines.map((lineIndex) => lineIndex + start);
 }
 
 export function createLineHighlighter(editor, changedLineClass) {
@@ -109,20 +141,20 @@ export function createLineHighlighter(editor, changedLineClass) {
       if (lineIndex < 0 || lineIndex >= editor.lineCount()) {
         continue;
       }
+
       const lineHandle = editor.addLineClass(lineIndex, "background", changedLineClass);
       highlightedLines.push(lineHandle);
     }
   }
 
-  function highlightDiff(beforeText, afterText) {
-    const changedIndexes = computeChangedNewLineIndexes(beforeText, afterText);
-    highlight(changedIndexes);
+  function highlightFormatResult(beforeText, afterText) {
+    highlight(getChangedResultLineIndexes(beforeText, afterText));
   }
 
   return {
     clear,
     highlight,
-    highlightDiff,
+    highlightFormatResult,
   };
 }
 

@@ -113,7 +113,7 @@ select {
 }
 
 .cm-changed-line {
-  background: color-mix(in srgb, var(--success) 16%, transparent);
+  background: color-mix(in srgb, var(--success) 18%, transparent);
 }
 
 .status {

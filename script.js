@@ -1,9 +1,9 @@
-import { CHANGED_LINE_CLASS, APP_VERSION } from "./js/config.js";
+import { APP_VERSION, CHANGED_LINE_CLASS } from "./js/config.js";
 import { createEditor } from "./js/editor.js";
 import { createLineHighlighter, signalAppliedChange } from "./js/highlighting.js";
 import { applyExplicitSpacing } from "./js/formatters/explicitSpacing.js";
 import { markEquationContent } from "./js/formatters/equationContentMark.js";
-import { relabelLatexWithChanges } from "./js/formatters/labeling.js";
+import { relabelLatex } from "./js/formatters/labeling.js";
 
 const editorHost = document.getElementById("latexEditor");
 const operationSelect = document.getElementById("operationSelect");
@@ -23,7 +23,7 @@ const editorState = createEditor(editorHost);
 const editor = editorState.instance;
 const highlighter = editorState.supportsHighlighting
   ? createLineHighlighter(editor, CHANGED_LINE_CLASS)
-  : { clear: () => {}, highlight: () => {}, highlightDiff: () => {} };
+  : { clear: () => {}, highlight: () => {}, highlightFormatResult: () => {} };
 
 if (editorState.isFallback) {
   statusMessage.textContent = "Offline editor mode: using plain text area (no syntax or line highlighting).";
@@ -39,20 +39,10 @@ function setEditorValue(value) {
 
 function applyEditorTransform(transformFn, successMessage) {
   const before = getEditorValue();
-  const result = transformFn(before);
-  const hasDetailedResult = typeof result === "object" && result !== null && typeof result.text === "string";
-  const after = hasDetailedResult ? result.text : result;
-
-  // Clear old line handles before replacing the full document to avoid stale highlights.
+  const after = transformFn(before);
   highlighter.clear();
   setEditorValue(after);
-
-  if (hasDetailedResult && Array.isArray(result.changedLineIndexes)) {
-    highlighter.highlight(result.changedLineIndexes);
-  } else {
-    highlighter.highlightDiff(before, after);
-  }
-
+  highlighter.highlightFormatResult(before, after);
   statusMessage.textContent = successMessage;
   signalAppliedChange(editorHost);
 }
@@ -61,7 +51,7 @@ formatButton.addEventListener("click", () => {
   const selected = operationSelect.value;
 
   if (selected === "labeling") {
-    applyEditorTransform(relabelLatexWithChanges, "Labeling applied to the text.");
+    applyEditorTransform(relabelLatex, "Labeling applied to the text.");
     return;
   }
 
