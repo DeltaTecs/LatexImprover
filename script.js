@@ -1,4 +1,4 @@
-const inputField = document.getElementById("latexInput");
+const editorHost = document.getElementById("latexEditor");
 const operationSelect = document.getElementById("operationSelect");
 const statusMessage = document.getElementById("statusMessage");
 const versionLabel = document.getElementById("versionLabel");
@@ -8,19 +8,175 @@ const formatButton = document.getElementById("formatButton");
 const copyButton = document.getElementById("copyButton");
 const downloadButton = document.getElementById("downloadButton");
 // Increment this value with every code update.
-const APP_VERSION = "1.2.0";
+const APP_VERSION = "1.3.0";
+const MAX_EXACT_DIFF_CELLS = 2000000;
+const CHANGED_LINE_CLASS = "cm-changed-line";
+
+let editor = null;
+const highlightedLines = [];
 
 if (versionLabel) {
   versionLabel.textContent = `Version ${APP_VERSION}`;
 }
 
+function createEditor() {
+  if (!editorHost) {
+    throw new Error("Editor host is missing.");
+  }
+
+  if (!window.CodeMirror) {
+    const fallback = document.createElement("textarea");
+    fallback.className = "editor-fallback";
+    fallback.spellcheck = false;
+    editorHost.appendChild(fallback);
+    editor = {
+      getValue: () => fallback.value,
+      setValue: (value) => {
+        fallback.value = value;
+      },
+      lineCount: () => fallback.value.replace(/\r\n/g, "\n").split("\n").length,
+      addLineClass: () => null,
+      removeLineClass: () => {},
+    };
+    return;
+  }
+
+  editor = window.CodeMirror(editorHost, {
+    value: "",
+    mode: "stex",
+    lineNumbers: true,
+    lineWrapping: true,
+    viewportMargin: Infinity,
+  });
+}
+
+function getEditorValue() {
+  return editor.getValue();
+}
+
+function setEditorValue(value) {
+  editor.setValue(value);
+}
+
+function clearChangedLineHighlights() {
+  while (highlightedLines.length > 0) {
+    const lineHandle = highlightedLines.pop();
+    editor.removeLineClass(lineHandle, "background", CHANGED_LINE_CLASS);
+  }
+}
+
+function highlightChangedLines(lineIndexes) {
+  clearChangedLineHighlights();
+
+  for (const lineIndex of lineIndexes) {
+    if (lineIndex < 0 || lineIndex >= editor.lineCount()) {
+      continue;
+    }
+    const lineHandle = editor.addLineClass(lineIndex, "background", CHANGED_LINE_CLASS);
+    highlightedLines.push(lineHandle);
+  }
+}
+
+function buildCoarseChangedLines(beforeLines, afterLines) {
+  let start = 0;
+  let beforeEnd = beforeLines.length - 1;
+  let afterEnd = afterLines.length - 1;
+
+  while (
+    start <= beforeEnd &&
+    start <= afterEnd &&
+    beforeLines[start] === afterLines[start]
+  ) {
+    start += 1;
+  }
+
+  while (
+    beforeEnd >= start &&
+    afterEnd >= start &&
+    beforeLines[beforeEnd] === afterLines[afterEnd]
+  ) {
+    beforeEnd -= 1;
+    afterEnd -= 1;
+  }
+
+  const changed = [];
+  for (let lineIndex = start; lineIndex <= afterEnd; lineIndex += 1) {
+    changed.push(lineIndex);
+  }
+
+  return changed;
+}
+
+function buildExactChangedLines(beforeLines, afterLines) {
+  const n = beforeLines.length;
+  const m = afterLines.length;
+  const dp = Array.from({ length: n + 1 }, () => new Uint32Array(m + 1));
+
+  for (let i = n - 1; i >= 0; i -= 1) {
+    for (let j = m - 1; j >= 0; j -= 1) {
+      if (beforeLines[i] === afterLines[j]) {
+        dp[i][j] = dp[i + 1][j + 1] + 1;
+      } else {
+        dp[i][j] = Math.max(dp[i + 1][j], dp[i][j + 1]);
+      }
+    }
+  }
+
+  const changed = [];
+  let i = 0;
+  let j = 0;
+
+  while (i < n && j < m) {
+    if (beforeLines[i] === afterLines[j]) {
+      i += 1;
+      j += 1;
+      continue;
+    }
+
+    if (dp[i + 1][j] >= dp[i][j + 1]) {
+      i += 1;
+    } else {
+      changed.push(j);
+      j += 1;
+    }
+  }
+
+  while (j < m) {
+    changed.push(j);
+    j += 1;
+  }
+
+  return changed;
+}
+
+function computeChangedNewLineIndexes(beforeText, afterText) {
+  const beforeLines = beforeText.replace(/\r\n/g, "\n").split("\n");
+  const afterLines = afterText.replace(/\r\n/g, "\n").split("\n");
+  const cells = beforeLines.length * afterLines.length;
+
+  if (cells > MAX_EXACT_DIFF_CELLS) {
+    return buildCoarseChangedLines(beforeLines, afterLines);
+  }
+
+  return buildExactChangedLines(beforeLines, afterLines);
+}
+
+function applyEditorTransform(transformFn, successMessage) {
+  const before = getEditorValue();
+  const after = transformFn(before);
+  setEditorValue(after);
+  highlightChangedLines(computeChangedNewLineIndexes(before, after));
+  statusMessage.textContent = successMessage;
+  signalAppliedChange();
+}
+
 function signalAppliedChange() {
-  inputField.classList.remove("applied-flash");
+  editorHost.classList.remove("applied-flash");
   // Force reflow so consecutive operations still re-trigger the flash.
-  void inputField.offsetWidth;
-  inputField.classList.add("applied-flash");
+  void editorHost.offsetWidth;
+  editorHost.classList.add("applied-flash");
   setTimeout(() => {
-    inputField.classList.remove("applied-flash");
+    editorHost.classList.remove("applied-flash");
   }, 650);
 }
 
@@ -324,24 +480,23 @@ function markEquationContent(latexCode) {
   return out;
 }
 
+createEditor();
+
 formatButton.addEventListener("click", () => {
   const selected = operationSelect.value;
 
   // Single gateway for formatting operations.
   if (selected === "labeling") {
-    inputField.value = relabelLatex(inputField.value);
-    statusMessage.textContent = "Labeling applied to the text.";
-    signalAppliedChange();
+    applyEditorTransform(relabelLatex, "Labeling applied to the text.");
     return;
   }
 
   if (selected === "equation-content-mark") {
-    inputField.value = markEquationContent(inputField.value);
-    statusMessage.textContent = "Equation content markers applied to the text.";
-    signalAppliedChange();
+    applyEditorTransform(markEquationContent, "Equation content markers applied to the text.");
     return;
   }
 
+  clearChangedLineHighlights();
   statusMessage.textContent = "Math formatting is not implemented yet.";
 });
 
@@ -358,7 +513,8 @@ fileInput.addEventListener("change", async () => {
 
   try {
     const content = await file.text();
-    inputField.value = content;
+    setEditorValue(content);
+    clearChangedLineHighlights();
     statusMessage.textContent = `Loaded file: ${file.name}`;
   } catch (_err) {
     statusMessage.textContent = "Could not read file.";
@@ -368,12 +524,13 @@ fileInput.addEventListener("change", async () => {
 });
 
 copyButton.addEventListener("click", async () => {
-  if (!inputField.value) {
+  const text = getEditorValue();
+  if (!text) {
     return;
   }
 
   try {
-    await navigator.clipboard.writeText(inputField.value);
+    await navigator.clipboard.writeText(text);
     copyButton.textContent = "Copied";
     setTimeout(() => {
       copyButton.textContent = "Copy";
@@ -387,7 +544,7 @@ copyButton.addEventListener("click", async () => {
 });
 
 downloadButton.addEventListener("click", () => {
-  const textToDownload = inputField.value;
+  const textToDownload = getEditorValue();
   if (!textToDownload.trim()) {
     statusMessage.textContent = "Nothing to download.";
     return;

@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LaTeX Improver</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css"
+    />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -24,12 +28,14 @@
         </div>
       </div>
       <p id="statusMessage" class="status" aria-live="polite"></p>
-      <textarea id="latexInput" class="editor" spellcheck="false" placeholder="\begin{equation}&#10;E = mc^2&#10;\end{equation}"></textarea>
+      <div id="latexEditor" class="editor"></div>
     </main>
     <footer class="app-footer">
       <small id="versionLabel">Version</small>
     </footer>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/stex/stex.min.js"></script>
     <script src="script.js"></script>
   </body>
 </html>

@@ -79,21 +79,41 @@ select {
   flex: 1;
   min-height: 0;
   width: 100%;
-  padding: 0.85rem;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: #fbfdff;
-  color: var(--text);
-  font-family: "Cascadia Code", Consolas, "Courier New", monospace;
-  font-size: 14px;
-  line-height: 1.5;
-  resize: none;
+  overflow: hidden;
   transition: border-color 0.22s ease-in-out, box-shadow 0.22s ease-in-out;
 }
 
 .editor.applied-flash {
   border-color: var(--success);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--success) 20%, transparent);
+}
+
+.CodeMirror {
+  height: 100%;
+  font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.editor-fallback {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  background: #fbfdff;
+  color: var(--text);
+  font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 0.85rem;
+}
+
+.cm-changed-line {
+  background: color-mix(in srgb, var(--success) 16%, transparent);
 }
 
 .status {
