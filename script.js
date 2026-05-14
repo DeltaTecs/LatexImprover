@@ -1,5 +1,4 @@
 const inputField = document.getElementById("latexInput");
-const outputField = document.getElementById("latexOutput");
 const operationSelect = document.getElementById("operationSelect");
 const statusMessage = document.getElementById("statusMessage");
 const versionLabel = document.getElementById("versionLabel");
@@ -9,10 +8,20 @@ const formatButton = document.getElementById("formatButton");
 const copyButton = document.getElementById("copyButton");
 const downloadButton = document.getElementById("downloadButton");
 // Increment this value with every code update.
-const APP_VERSION = "1.0.0";
+const APP_VERSION = "1.2.0";
 
 if (versionLabel) {
   versionLabel.textContent = `Version ${APP_VERSION}`;
+}
+
+function signalAppliedChange() {
+  inputField.classList.remove("applied-flash");
+  // Force reflow so consecutive operations still re-trigger the flash.
+  void inputField.offsetWidth;
+  inputField.classList.add("applied-flash");
+  setTimeout(() => {
+    inputField.classList.remove("applied-flash");
+  }, 650);
 }
 
 // Standalone `\label{...}` lines are skipped while consuming structures.
@@ -76,59 +85,8 @@ function removeInlineLabel(line) {
   return line.replace(/\s*\\label\{[^}]+\}/g, "").replace(/[ \t]+$/g, "");
 }
 
-function splitUnescapedComment(text) {
-  // A `%` starts a comment unless escaped (`\%`).
-  for (let i = 0; i < text.length; i += 1) {
-    if (text[i] === "%" && text[i - 1] !== "\\") {
-      return text.slice(0, i);
-    }
-  }
-  return text;
-}
-
-function countRowBreakCommands(text) {
-  let backslashRun = 0;
-  let breaks = 0;
-
-  // Count pairs of backslashes; odd trailing slashes are ignored.
-  for (const char of text) {
-    if (char === "\\") {
-      backslashRun += 1;
-      continue;
-    }
-
-    if (backslashRun > 0) {
-      breaks += Math.floor(backslashRun / 2);
-      backslashRun = 0;
-    }
-  }
-
-  if (backslashRun > 0) {
-    breaks += Math.floor(backslashRun / 2);
-  }
-
-  return breaks;
-}
-
-// Count logical rows in display math from LaTeX row breaks (`\\`), not source line wraps.
-function countImportantEquationLines(lines) {
-  let hasMathContent = false;
-  let rowBreaks = 0;
-
-  for (const rawLine of lines) {
-    const noComment = splitUnescapedComment(removeInlineLabel(rawLine));
-    if (noComment.trim()) {
-      hasMathContent = true;
-    }
-
-    rowBreaks += countRowBreakCommands(noComment);
-  }
-
-  if (!hasMathContent) {
-    return 1;
-  }
-
-  return Math.max(1, rowBreaks + 1);
+function isPercentMarkerLine(line) {
+  return typeof line === "string" && /^\s*%\s*$/.test(line);
 }
 
 function skipFollowingLabelOnlyLines(lines, startIndex) {
@@ -165,17 +123,9 @@ function appendEnvironmentBlock(output, block, labelLines = []) {
   }
 }
 
-// Emit one equation label, or indexed labels when there are multiple math rows.
-function buildEquationLabelLines(indent, core, importantLineCount) {
-  if (importantLineCount <= 1) {
-    return [`${indent}\\label{${core}}`];
-  }
-
-  const labels = [];
-  for (let labelCounter = 1; labelCounter <= importantLineCount; labelCounter += 1) {
-    labels.push(`${indent}\\label{${core},${labelCounter}}`);
-  }
-  return labels;
+// Equations are always labeled once, regardless of internal row breaks.
+function buildEquationLabelLines(indent, core) {
+  return [`${indent}\\label{${core}}`];
 }
 
 function findEnvironmentEnd(lines, startIndex, envName) {
@@ -299,8 +249,7 @@ function relabelLatex(latexCode) {
           const indent = getIndent(block.startLine);
           const romanSection = toRoman(sectionIndex || 1);
           const core = `eq-${romanSection}.${equationIndex}`;
-          const importantLineCount = countImportantEquationLines(block.innerLines);
-          labelLines.push(...buildEquationLabelLines(indent, core, importantLineCount));
+          labelLines.push(...buildEquationLabelLines(indent, core));
         }
 
         appendEnvironmentBlock(output, block, labelLines);
@@ -328,17 +277,71 @@ function relabelLatex(latexCode) {
   return `${output.join("\n").replace(/\n{3,}/g, "\n\n").trim()}\n`;
 }
 
+function markEquationContent(latexCode) {
+  const normalized = latexCode.replace(/\r\n/g, "\n");
+  const lines = normalized.split("\n");
+  const output = [];
+  const hadTrailingNewline = normalized.endsWith("\n");
+  let i = 0;
+
+  while (i < lines.length) {
+    const sourceLine = lines[i];
+    const beginMatch = BEGIN_ENV_PATTERN.exec(sourceLine);
+
+    if (beginMatch) {
+      const envName = beginMatch[1];
+      const bareEnvName = envName.replace(/\*$/, "");
+
+      if (EQUATION_ENV_NAMES.has(bareEnvName)) {
+        const endIndex = findEnvironmentEnd(lines, i, envName);
+        const markerLine = `${getIndent(sourceLine)}%`;
+
+        if (!isPercentMarkerLine(output[output.length - 1])) {
+          output.push(markerLine);
+        }
+
+        for (let lineIndex = i; lineIndex <= endIndex; lineIndex += 1) {
+          output.push(lines[lineIndex]);
+        }
+
+        if (!isPercentMarkerLine(lines[endIndex + 1])) {
+          output.push(markerLine);
+        }
+
+        i = endIndex + 1;
+        continue;
+      }
+    }
+
+    output.push(sourceLine);
+    i += 1;
+  }
+
+  const out = output.join("\n");
+  if (hadTrailingNewline) {
+    return `${out}\n`;
+  }
+  return out;
+}
+
 formatButton.addEventListener("click", () => {
   const selected = operationSelect.value;
 
   // Single gateway for formatting operations.
   if (selected === "labeling") {
-    outputField.value = relabelLatex(inputField.value);
-    statusMessage.textContent = "Applied labeling operation.";
+    inputField.value = relabelLatex(inputField.value);
+    statusMessage.textContent = "Labeling applied to the text.";
+    signalAppliedChange();
     return;
   }
 
-  outputField.value = inputField.value;
+  if (selected === "equation-content-mark") {
+    inputField.value = markEquationContent(inputField.value);
+    statusMessage.textContent = "Equation content markers applied to the text.";
+    signalAppliedChange();
+    return;
+  }
+
   statusMessage.textContent = "Math formatting is not implemented yet.";
 });
 
@@ -365,26 +368,26 @@ fileInput.addEventListener("change", async () => {
 });
 
 copyButton.addEventListener("click", async () => {
-  if (!outputField.value) {
+  if (!inputField.value) {
     return;
   }
 
   try {
-    await navigator.clipboard.writeText(outputField.value);
+    await navigator.clipboard.writeText(inputField.value);
     copyButton.textContent = "Copied";
     setTimeout(() => {
-      copyButton.textContent = "Copy Result";
+      copyButton.textContent = "Copy";
     }, 1200);
   } catch (_err) {
     copyButton.textContent = "Copy Failed";
     setTimeout(() => {
-      copyButton.textContent = "Copy Result";
+      copyButton.textContent = "Copy";
     }, 1200);
   }
 });
 
 downloadButton.addEventListener("click", () => {
-  const textToDownload = outputField.value || inputField.value;
+  const textToDownload = inputField.value;
   if (!textToDownload.trim()) {
     statusMessage.textContent = "Nothing to download.";
     return;

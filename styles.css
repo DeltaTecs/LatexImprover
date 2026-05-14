@@ -7,6 +7,7 @@
   --accent: #1357dd;
   --accent-hover: #0e47b5;
   --border: #d5deef;
+  --success: #126b3e;
 }
 
 * {
@@ -23,43 +24,50 @@ body {
   flex-direction: column;
 }
 
-.container {
-  width: calc(100vw - 2rem);
-  max-width: none;
-  margin: 1rem;
-  padding: 1.25rem;
+.app-shell {
+  flex: 1;
+  min-height: 0;
+  margin: 1rem 1rem 0;
+  padding: 1rem;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 12px;
   box-shadow: 0 14px 30px rgba(20, 45, 90, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
 }
 
 .app-footer {
-  margin: 0 1rem 1rem;
+  margin: 0.5rem 1rem 0.75rem;
   color: var(--muted);
   text-align: right;
   font-size: 0.85rem;
 }
 
-h1 {
-  margin-top: 0;
-  margin-bottom: 0.5rem;
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
 }
 
-p {
-  margin-top: 0;
-  color: var(--muted);
+.toolbar-title {
+  font-weight: 700;
+  letter-spacing: 0.2px;
 }
 
-label {
-  display: block;
-  margin: 1rem 0 0.4rem;
-  font-weight: 600;
+.toolbar-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
 }
 
 select {
-  width: 100%;
-  padding: 0.65rem 0.75rem;
+  min-width: 240px;
+  padding: 0.58rem 0.7rem;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: #fbfdff;
@@ -67,9 +75,10 @@ select {
   font-size: 14px;
 }
 
-textarea {
+.editor {
+  flex: 1;
+  min-height: 0;
   width: 100%;
-  min-height: 38vh;
   padding: 0.85rem;
   border-radius: 8px;
   border: 1px solid var(--border);
@@ -78,19 +87,18 @@ textarea {
   font-family: "Cascadia Code", Consolas, "Courier New", monospace;
   font-size: 14px;
   line-height: 1.5;
-  resize: vertical;
+  resize: none;
+  transition: border-color 0.22s ease-in-out, box-shadow 0.22s ease-in-out;
 }
 
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.8rem;
-  margin-top: 1rem;
+.editor.applied-flash {
+  border-color: var(--success);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--success) 20%, transparent);
 }
 
 .status {
   min-height: 1.2rem;
-  margin: 0.7rem 0 0;
+  margin: 0;
   color: var(--muted);
   font-size: 0.95rem;
 }
@@ -111,17 +119,22 @@ button:hover {
 }
 
 @media (max-width: 700px) {
-  .container {
-    margin: 1rem;
-    padding: 1rem;
-    width: calc(100vw - 2rem);
+  .app-shell {
+    margin: 0.75rem 0.75rem 0;
+    padding: 0.75rem;
   }
 
-  .actions {
+  .toolbar-controls {
     flex-direction: column;
+    align-items: stretch;
   }
 
-  textarea {
-    min-height: 42vh;
+  select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  button {
+    width: 100%;
   }
 }
