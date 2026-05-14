@@ -2,11 +2,18 @@ const inputField = document.getElementById("latexInput");
 const outputField = document.getElementById("latexOutput");
 const operationSelect = document.getElementById("operationSelect");
 const statusMessage = document.getElementById("statusMessage");
+const versionLabel = document.getElementById("versionLabel");
 const fileInput = document.getElementById("fileInput");
 const uploadButton = document.getElementById("uploadButton");
 const formatButton = document.getElementById("formatButton");
 const copyButton = document.getElementById("copyButton");
 const downloadButton = document.getElementById("downloadButton");
+// Increment this value with every code update.
+const APP_VERSION = "1.0.0";
+
+if (versionLabel) {
+  versionLabel.textContent = `Version ${APP_VERSION}`;
+}
 
 // Standalone `\label{...}` lines are skipped while consuming structures.
 const LABEL_ONLY_PATTERN = /^\s*\\label\{[^}]+\}\s*$/;

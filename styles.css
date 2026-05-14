@@ -19,6 +19,8 @@ body {
   background: linear-gradient(140deg, #eef3ff 0%, var(--bg) 50%, #e9f5ff 100%);
   color: var(--text);
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .container {
@@ -30,6 +32,13 @@ body {
   border: 1px solid var(--border);
   border-radius: 12px;
   box-shadow: 0 14px 30px rgba(20, 45, 90, 0.08);
+}
+
+.app-footer {
+  margin: 0 1rem 1rem;
+  color: var(--muted);
+  text-align: right;
+  font-size: 0.85rem;
 }
 
 h1 {
