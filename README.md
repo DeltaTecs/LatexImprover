@@ -20,7 +20,7 @@ The editor uses CodeMirror from a CDN when available. If those assets cannot loa
 
 ## Run With Docker Compose
 
-The included Docker Compose setup serves the static files through Nginx behind Caddy.
+The included Docker Compose setup serves only the browser assets through Nginx behind Caddy.
 
 1. Copy the environment file:
 
