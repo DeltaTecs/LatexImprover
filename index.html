@@ -35,6 +35,11 @@
           Explicit Content Mark
           <span class="tooltip-text">Wraps display-math environments with<br>percent-sign marker lines above and below,<br>making equation boundaries explicit in the source.</span>
         </label>
+        <label class="formatter-option">
+          <input type="checkbox" id="chk-letter-macros" />
+          Letter Macros
+          <span class="tooltip-text">Replaces expanded font/accent commands with<br>preamble shorthands.<br>Example: \mathbb{R} &rarr; \bbR, \mathcal{A} &rarr; \cA</span>
+        </label>
         <div class="formatter-group">
           <label class="formatter-option">
             <input type="checkbox" id="chk-equation-to-align" />
@@ -77,6 +82,7 @@
         <ul>
           <li>En-Dash Names converts compound names like Pauli-Fierz to Pauli--Fierz.</li>
           <li>Explicit Content Mark wraps equation-like environments with percent marker lines.</li>
+          <li>Letter Macros replaces expanded font/accent commands such as \mathbb{R} or \mathcal{A} with preamble shorthands like \bbR or \cA.</li>
           <li>Equation to Align converts equation and \[...\] display math environments to align or align* form.</li>
           <li>Explicit Spacing normalizes spacing inside align math content (requires Equation to Align).</li>
           <li>Labeling adds managed inline labels to sections and supported environments (requires Equation to Align).</li>

@@ -10,6 +10,7 @@ import { applyExplicitSpacing } from "./js/formatters/explicitSpacing.js";
 import { markEquationContent } from "./js/formatters/equationContentMark.js";
 import { relabelLatex } from "./js/formatters/labeling.js";
 import { convertEquationToAlign } from "./js/formatters/equationToAlign.js";
+import { applyLetterMacros } from "./js/formatters/letterMacros.js";
 
 const inputEditorHost = document.getElementById("inputEditor");
 const outputEditorHost = document.getElementById("outputEditor");
@@ -30,6 +31,7 @@ const chkEquationContentMark = document.getElementById("chk-equation-content-mar
 const chkEquationToAlign = document.getElementById("chk-equation-to-align");
 const chkExplicitSpacing = document.getElementById("chk-explicit-spacing");
 const chkLabeling = document.getElementById("chk-labeling");
+const chkLetterMacros = document.getElementById("chk-letter-macros");
 
 if (versionLabel) {
   versionLabel.textContent = `Version ${APP_VERSION}`;
@@ -79,8 +81,9 @@ formatButton.addEventListener("click", () => {
   const useLabeling = chkLabeling.checked && useEquationToAlign;
   const useEnDashNames = chkEnDashNames.checked;
   const useEquationContentMark = chkEquationContentMark.checked;
+  const useLetterMacros = chkLetterMacros.checked;
 
-  if (!useEquationToAlign && !useExplicitSpacing && !useLabeling && !useEnDashNames && !useEquationContentMark) {
+  if (!useEquationToAlign && !useExplicitSpacing && !useLabeling && !useEnDashNames && !useEquationContentMark && !useLetterMacros) {
     statusMessage.textContent = "No formatters selected.";
     return;
   }
@@ -108,6 +111,10 @@ formatButton.addEventListener("click", () => {
   if (useEquationContentMark) {
     result = markEquationContent(result);
     applied.push("Explicit Content Mark");
+  }
+  if (useLetterMacros) {
+    result = applyLetterMacros(result);
+    applied.push("Letter Macros");
   }
 
   const changedLineIndexes = getChangedResultLineIndexes(before, result);
