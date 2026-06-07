@@ -16,13 +16,6 @@
       <div class="toolbar">
         <div class="toolbar-title">LaTeX Format Enhancer</div>
         <div class="toolbar-controls">
-          <select id="operationSelect" aria-label="Operation">
-            <option value="labeling">Labeling</option>
-            <option value="equation-content-mark">Equation Content Mark (%)</option>
-            <option value="explicit-spacing">Explicit Spacing (\ )</option>
-            <option value="en-dash-names">En-Dash Names</option>
-            <option value="equation-to-align">Equation to Align</option>
-          </select>
           <input id="fileInput" type="file" accept=".tex,.txt,.latex" hidden />
           <button id="uploadButton" type="button">Upload</button>
           <button id="formatButton" type="button">Apply</button>
@@ -31,22 +24,57 @@
           <button id="helpButton" type="button">Help</button>
         </div>
       </div>
+      <div class="formatter-bar" role="group" aria-label="Formatters">
+        <label class="formatter-option">
+          <input type="checkbox" id="chk-en-dash-names" />
+          En-Dash Names
+        </label>
+        <label class="formatter-option">
+          <input type="checkbox" id="chk-equation-content-mark" />
+          Explicit Content Mark
+        </label>
+        <div class="formatter-group">
+          <label class="formatter-option">
+            <input type="checkbox" id="chk-equation-to-align" />
+            Equation to Align
+          </label>
+          <div class="formatter-children">
+            <label class="formatter-option formatter-child">
+              <input type="checkbox" id="chk-explicit-spacing" disabled />
+              Explicit Spacing
+            </label>
+            <label class="formatter-option formatter-child">
+              <input type="checkbox" id="chk-labeling" disabled />
+              Labeling
+            </label>
+          </div>
+        </div>
+      </div>
       <p id="statusMessage" class="status" aria-live="polite"></p>
-      <div id="latexEditor" class="editor"></div>
+      <div class="editor-area">
+        <div class="editor-pane">
+          <div class="editor-pane-label">Input</div>
+          <div id="inputEditor" class="editor"></div>
+        </div>
+        <div class="editor-pane">
+          <div class="editor-pane-label">Output</div>
+          <div id="outputEditor" class="editor"></div>
+        </div>
+      </div>
     </main>
     <dialog id="helpDialog" class="help-dialog">
       <div class="help-dialog-content">
         <h2>LaTeX Format Enhancer Help</h2>
         <p>
-          Paste or upload LaTeX, choose a formatter, and press Apply. Changed result lines are
-          marked with a green background.
+          Paste or upload LaTeX into the input pane, select one or more formatters, and press Apply.
+          The formatted result appears in the output pane with changed lines marked green.
         </p>
         <ul>
-          <li>Labeling adds managed inline labels to sections and supported environments.</li>
-          <li>Equation Content Mark (%) wraps equation-like environments with percent marker lines.</li>
-          <li>Explicit Spacing normalizes spacing inside math content.</li>
           <li>En-Dash Names converts compound names like Pauli-Fierz to Pauli--Fierz.</li>
+          <li>Explicit Content Mark wraps equation-like environments with percent marker lines.</li>
           <li>Equation to Align converts equation and \[...\] display math environments to align or align* form.</li>
+          <li>Explicit Spacing normalizes spacing inside align math content (requires Equation to Align).</li>
+          <li>Labeling adds managed inline labels to sections and supported environments (requires Equation to Align).</li>
         </ul>
         <button id="helpCloseButton" type="button">Close</button>
       </div>

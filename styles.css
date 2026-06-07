@@ -102,14 +102,84 @@ body {
   align-items: center;
 }
 
-select {
-  min-width: 240px;
-  padding: 0.58rem 0.7rem;
-  border-radius: 8px;
+/* Formatter checkbox tree */
+.formatter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 1.2rem;
+  padding: 0.55rem 0.75rem;
+  background: #f4f7fd;
   border: 1px solid var(--border);
-  background: #fbfdff;
-  color: var(--text);
-  font-size: 14px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.formatter-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.6rem;
+}
+
+.formatter-children {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.6rem;
+  padding-left: 0.5rem;
+  border-left: 2px solid var(--border);
+  margin-left: 0.25rem;
+}
+
+.formatter-option {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.formatter-option input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+.formatter-option:has(input:disabled) {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.formatter-option:has(input:disabled) input {
+  cursor: not-allowed;
+}
+
+/* Split editor layout */
+.editor-area {
+  display: flex;
+  gap: 0.75rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.editor-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-height: 0;
+  min-width: 0;
+}
+
+.editor-pane-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
 }
 
 .editor {
@@ -265,12 +335,21 @@ button:hover {
     align-items: stretch;
   }
 
-  select {
-    width: 100%;
-    min-width: 0;
-  }
-
   button {
     width: 100%;
+  }
+
+  .formatter-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.45rem;
+  }
+
+  .editor-area {
+    flex-direction: column;
+  }
+
+  .editor-pane {
+    min-height: 40vh;
   }
 }

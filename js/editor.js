@@ -1,7 +1,8 @@
-function buildFallbackEditor(editorHost) {
+function buildFallbackEditor(editorHost, readOnly = false) {
   const fallback = document.createElement("textarea");
   fallback.className = "editor-fallback";
   fallback.spellcheck = false;
+  fallback.readOnly = readOnly;
   editorHost.appendChild(fallback);
 
   return {
@@ -24,14 +25,14 @@ function hasCodeMirrorWithStexMode() {
   return !!modes && !!modes.stex;
 }
 
-export function createEditor(editorHost) {
+export function createEditor(editorHost, { readOnly = false } = {}) {
   if (!editorHost) {
     throw new Error("Editor host is missing.");
   }
 
   if (!hasCodeMirrorWithStexMode()) {
     return {
-      instance: buildFallbackEditor(editorHost),
+      instance: buildFallbackEditor(editorHost, readOnly),
       supportsHighlighting: false,
       isFallback: true,
     };
@@ -44,6 +45,7 @@ export function createEditor(editorHost) {
       lineNumbers: true,
       lineWrapping: true,
       viewportMargin: Infinity,
+      readOnly: readOnly,
     }),
     supportsHighlighting: true,
     isFallback: false,

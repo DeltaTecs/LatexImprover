@@ -52,6 +52,16 @@ The included Docker Compose setup serves only the browser assets through Nginx b
    docker compose down
    ```
 
+## Run Tests
+
+Tests use the Node.js built-in test runner inside a dedicated Docker container.
+
+```sh
+docker compose -f docker-compose.test.yml up --build
+```
+
+The container exits with code `0` on success and `1` on failure.
+
 ## Project Structure
 
 - `index.html`: page markup and toolbar.

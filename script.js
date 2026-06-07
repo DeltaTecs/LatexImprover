@@ -11,8 +11,8 @@ import { markEquationContent } from "./js/formatters/equationContentMark.js";
 import { relabelLatex } from "./js/formatters/labeling.js";
 import { convertEquationToAlign } from "./js/formatters/equationToAlign.js";
 
-const editorHost = document.getElementById("latexEditor");
-const operationSelect = document.getElementById("operationSelect");
+const inputEditorHost = document.getElementById("inputEditor");
+const outputEditorHost = document.getElementById("outputEditor");
 const statusMessage = document.getElementById("statusMessage");
 const versionLabel = document.getElementById("versionLabel");
 const formatCompleteIndicator = document.getElementById("formatCompleteIndicator");
@@ -25,26 +25,28 @@ const helpButton = document.getElementById("helpButton");
 const helpDialog = document.getElementById("helpDialog");
 const helpCloseButton = document.getElementById("helpCloseButton");
 
+const chkEnDashNames = document.getElementById("chk-en-dash-names");
+const chkEquationContentMark = document.getElementById("chk-equation-content-mark");
+const chkEquationToAlign = document.getElementById("chk-equation-to-align");
+const chkExplicitSpacing = document.getElementById("chk-explicit-spacing");
+const chkLabeling = document.getElementById("chk-labeling");
+
 if (versionLabel) {
   versionLabel.textContent = `Version ${APP_VERSION}`;
 }
 
-const editorState = createEditor(editorHost);
-const editor = editorState.instance;
-const highlighter = editorState.supportsHighlighting
-  ? createLineHighlighter(editor, CHANGED_LINE_CLASS)
-  : { clear: () => {}, highlight: () => {}, highlightFormatResult: () => {} };
+const inputEditorState = createEditor(inputEditorHost);
+const outputEditorState = createEditor(outputEditorHost, { readOnly: true });
 
-if (editorState.isFallback) {
+const inputEditor = inputEditorState.instance;
+const outputEditor = outputEditorState.instance;
+
+const outputHighlighter = outputEditorState.supportsHighlighting
+  ? createLineHighlighter(outputEditor, CHANGED_LINE_CLASS)
+  : { clear: () => {}, highlight: () => {} };
+
+if (inputEditorState.isFallback) {
   statusMessage.textContent = "Offline editor mode: using plain text area (no syntax or line highlighting).";
-}
-
-function getEditorValue() {
-  return editor.getValue();
-}
-
-function setEditorValue(value) {
-  editor.setValue(value);
 }
 
 function signalFormatComplete() {
@@ -61,18 +63,65 @@ function formatChangedLineCount(count) {
   return `${count} ${count === 1 ? "line" : "lines"} changed.`;
 }
 
-function applyEditorTransform(transformFn, successMessage) {
-  const before = getEditorValue();
-  const after = transformFn(before);
-  const changedLineIndexes = getChangedResultLineIndexes(before, after);
-  highlighter.clear();
-  setEditorValue(after);
-  highlighter.highlight(changedLineIndexes);
+chkEquationToAlign.addEventListener("change", () => {
+  const enabled = chkEquationToAlign.checked;
+  chkExplicitSpacing.disabled = !enabled;
+  chkLabeling.disabled = !enabled;
+  if (!enabled) {
+    chkExplicitSpacing.checked = false;
+    chkLabeling.checked = false;
+  }
+});
+
+formatButton.addEventListener("click", () => {
+  const useEquationToAlign = chkEquationToAlign.checked;
+  const useExplicitSpacing = chkExplicitSpacing.checked && useEquationToAlign;
+  const useLabeling = chkLabeling.checked && useEquationToAlign;
+  const useEnDashNames = chkEnDashNames.checked;
+  const useEquationContentMark = chkEquationContentMark.checked;
+
+  if (!useEquationToAlign && !useExplicitSpacing && !useLabeling && !useEnDashNames && !useEquationContentMark) {
+    statusMessage.textContent = "No formatters selected.";
+    return;
+  }
+
+  const before = inputEditor.getValue();
+  let result = before;
+  const applied = [];
+
+  if (useEquationToAlign) {
+    result = convertEquationToAlign(result);
+    applied.push("Equation to Align");
+  }
+  if (useLabeling) {
+    result = relabelLatex(result);
+    applied.push("Labeling");
+  }
+  if (useExplicitSpacing) {
+    result = applyExplicitSpacing(result);
+    applied.push("Explicit Spacing");
+  }
+  if (useEnDashNames) {
+    result = applyEnDashNames(result);
+    applied.push("En-Dash Names");
+  }
+  if (useEquationContentMark) {
+    result = markEquationContent(result);
+    applied.push("Explicit Content Mark");
+  }
+
+  const changedLineIndexes = getChangedResultLineIndexes(before, result);
+  outputHighlighter.clear();
+  outputEditor.setValue(result);
+  outputHighlighter.highlight(changedLineIndexes);
+
+  const formatterList = applied.join(", ");
   statusMessage.textContent =
-    `${successMessage} ${formatChangedLineCount(changedLineIndexes.length)}`;
-  signalAppliedChange(editorHost);
+    `Applied: ${formatterList}. ${formatChangedLineCount(changedLineIndexes.length)}`;
+
+  signalAppliedChange(outputEditorHost);
   signalFormatComplete();
-}
+});
 
 function closeHelpDialog() {
   if (!helpDialog) {
@@ -86,38 +135,6 @@ function closeHelpDialog() {
 
   helpDialog.removeAttribute("open");
 }
-
-formatButton.addEventListener("click", () => {
-  const selected = operationSelect.value;
-
-  if (selected === "labeling") {
-    applyEditorTransform(relabelLatex, "Labeling applied to the text.");
-    return;
-  }
-
-  if (selected === "equation-content-mark") {
-    applyEditorTransform(markEquationContent, "Equation content markers applied to the text.");
-    return;
-  }
-
-  if (selected === "explicit-spacing") {
-    applyEditorTransform(applyExplicitSpacing, "Explicit spacing applied inside math content.");
-    return;
-  }
-
-  if (selected === "en-dash-names") {
-    applyEditorTransform(applyEnDashNames, "En-dash name compounds applied to the text.");
-    return;
-  }
-
-  if (selected === "equation-to-align") {
-    applyEditorTransform(convertEquationToAlign, "Equation environments converted to align.");
-    return;
-  }
-
-  highlighter.clear();
-  statusMessage.textContent = "Selected formatting operation is not available.";
-});
 
 if (helpButton && helpDialog) {
   helpButton.addEventListener("click", () => {
@@ -160,8 +177,9 @@ fileInput.addEventListener("change", async () => {
 
   try {
     const content = await file.text();
-    highlighter.clear();
-    setEditorValue(content);
+    outputHighlighter.clear();
+    inputEditor.setValue(content);
+    outputEditor.setValue("");
     statusMessage.textContent = `Loaded file: ${file.name}`;
   } catch (_err) {
     statusMessage.textContent = "Could not read file.";
@@ -171,7 +189,7 @@ fileInput.addEventListener("change", async () => {
 });
 
 copyButton.addEventListener("click", async () => {
-  const text = getEditorValue();
+  const text = outputEditor.getValue() || inputEditor.getValue();
   if (!text) {
     return;
   }
@@ -191,7 +209,7 @@ copyButton.addEventListener("click", async () => {
 });
 
 downloadButton.addEventListener("click", () => {
-  const textToDownload = getEditorValue();
+  const textToDownload = outputEditor.getValue() || inputEditor.getValue();
   if (!textToDownload.trim()) {
     statusMessage.textContent = "Nothing to download.";
     return;

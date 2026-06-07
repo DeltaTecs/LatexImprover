@@ -3,4 +3,4 @@ WORKDIR /app
 COPY package.json .
 COPY js/ ./js/
 COPY tests/ ./tests/
-CMD ["node", "--test", "--test-reporter=spec", "tests/equationToAlign.test.js", "tests/explicitSpacing.test.js"]
+CMD ["node", "--test", "--test-reporter=spec", "tests/equationToAlign.test.js", "tests/explicitSpacing.test.js", "tests/labeling.test.js"]
