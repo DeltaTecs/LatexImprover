@@ -157,6 +157,45 @@ body {
   cursor: not-allowed;
 }
 
+/* Tooltip */
+.formatter-option {
+  position: relative;
+}
+
+.tooltip-text {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  background: #1f2430;
+  color: #f0f4ff;
+  font-size: 0.8rem;
+  font-weight: 400;
+  line-height: 1.5;
+  white-space: nowrap;
+  padding: 0.45rem 0.65rem;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(20, 45, 90, 0.22);
+  pointer-events: none;
+  text-align: left;
+}
+
+.tooltip-text::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-bottom-color: #1f2430;
+}
+
+.formatter-option:hover .tooltip-text {
+  display: block;
+}
+
 /* Split editor layout */
 .editor-area {
   display: flex;

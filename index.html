@@ -28,24 +28,29 @@
         <label class="formatter-option">
           <input type="checkbox" id="chk-en-dash-names" />
           En-Dash Names
+          <span class="tooltip-text">Replaces hyphens between compound proper names<br>with LaTeX en-dashes (--).<br>Example: Pauli-Fierz &rarr; Pauli--Fierz</span>
         </label>
         <label class="formatter-option">
           <input type="checkbox" id="chk-equation-content-mark" />
           Explicit Content Mark
+          <span class="tooltip-text">Wraps display-math environments with<br>percent-sign marker lines above and below,<br>making equation boundaries explicit in the source.</span>
         </label>
         <div class="formatter-group">
           <label class="formatter-option">
             <input type="checkbox" id="chk-equation-to-align" />
             Equation to Align
+            <span class="tooltip-text">Converts equation and \[...\] display math<br>environments to align or align* form,<br>enabling multi-line layout and sub-numbering.</span>
           </label>
           <div class="formatter-children">
             <label class="formatter-option formatter-child">
               <input type="checkbox" id="chk-explicit-spacing" disabled />
               Explicit Spacing
+              <span class="tooltip-text">Normalizes spacing operators (\,, \quad, etc.)<br>inside align math content.<br>Requires Equation to Align.</span>
             </label>
             <label class="formatter-option formatter-child">
               <input type="checkbox" id="chk-labeling" disabled />
               Labeling
+              <span class="tooltip-text">Adds auto-managed \label{...} tags<br>to sections and supported environments.<br>Requires Equation to Align.</span>
             </label>
           </div>
         </div>
