@@ -31,17 +31,24 @@ describe("applyExplicitSpacing — formats inside \\begin{align}", () => {
     );
   });
 
-  test("spaces + operator", () => {
+  test("leaves + operator untouched (not a statement separator)", () => {
     assert.equal(
       applyExplicitSpacing("\\begin{align}\na+b\n\\end{align}"),
-      "\\begin{align}\na \\ + \\ b\n\\end{align}"
+      "\\begin{align}\na+b\n\\end{align}"
     );
   });
 
-  test("spaces - operator", () => {
+  test("leaves - operator untouched (not a statement separator)", () => {
     assert.equal(
       applyExplicitSpacing("\\begin{align}\na-b\n\\end{align}"),
-      "\\begin{align}\na \\ - \\ b\n\\end{align}"
+      "\\begin{align}\na-b\n\\end{align}"
+    );
+  });
+
+  test("only spaces the separator, not surrounding + operators", () => {
+    assert.equal(
+      applyExplicitSpacing("\\begin{align}\na + b  = c\n\\end{align}"),
+      "\\begin{align}\na + b \\ = \\ c\n\\end{align}"
     );
   });
 

@@ -11,11 +11,11 @@ describe("convertEquationToAlign — \\begin{equation}", () => {
     );
   });
 
-  test("converts starred variant to \\begin{align*}", () => {
+  test("converts starred variant to \\begin{align}", () => {
     const input = "\\begin{equation*}\n  x = y\n\\end{equation*}";
     assert.equal(
       convertEquationToAlign(input),
-      "\\begin{align*}\n  x = y\n\\end{align*}"
+      "\\begin{align}\n  x = y\n\\end{align}"
     );
   });
 
@@ -57,17 +57,17 @@ describe("convertEquationToAlign — \\begin{equation}", () => {
       "\\begin{equation}\n  a = b\n\\end{equation}\ntext\n\\begin{equation*}\n  c = d\n\\end{equation*}";
     assert.equal(
       convertEquationToAlign(input),
-      "\\begin{align}\n  a = b\n\\end{align}\ntext\n\\begin{align*}\n  c = d\n\\end{align*}"
+      "\\begin{align}\n  a = b\n\\end{align}\ntext\n\\begin{align}\n  c = d\n\\end{align}"
     );
   });
 });
 
 describe("convertEquationToAlign — \\[...\\]", () => {
-  test("multi-line \\[...\\] becomes align*", () => {
+  test("multi-line \\[...\\] becomes align", () => {
     const input = "\\[\n  x = y\n\\]";
     assert.equal(
       convertEquationToAlign(input),
-      "\\begin{align*}\n  x = y\n\\end{align*}"
+      "\\begin{align}\n  x = y\n\\end{align}"
     );
   });
 
@@ -75,15 +75,15 @@ describe("convertEquationToAlign — \\[...\\]", () => {
     const input = "  \\[\n    x = y\n  \\]";
     assert.equal(
       convertEquationToAlign(input),
-      "  \\begin{align*}\n    x = y\n  \\end{align*}"
+      "  \\begin{align}\n    x = y\n  \\end{align}"
     );
   });
 
-  test("same-line \\[ x \\] becomes align*", () => {
+  test("same-line \\[ x \\] becomes align", () => {
     const input = "\\[ x = y \\]";
     assert.equal(
       convertEquationToAlign(input),
-      "\\begin{align*}\n  x = y\n\\end{align*}"
+      "\\begin{align}\n  x = y\n\\end{align}"
     );
   });
 
@@ -91,7 +91,7 @@ describe("convertEquationToAlign — \\[...\\]", () => {
     const input = "\\[\n  x = y\n\\] % important";
     assert.equal(
       convertEquationToAlign(input),
-      "\\begin{align*}\n  x = y\n\\end{align*} % important"
+      "\\begin{align}\n  x = y\n\\end{align} % important"
     );
   });
 

@@ -16,7 +16,7 @@ export function convertEquationToAlign(latexCode) {
     if (beginMatch) {
       const envName = beginMatch[1];
       if (envName === "equation" || envName === "equation*") {
-        const targetEnv = envName === "equation" ? "align" : "align*";
+        const targetEnv = "align";
         const endIndex = findEnvironmentEnd(lines, i, envName);
 
         if (i === endIndex) {
@@ -46,9 +46,9 @@ export function convertEquationToAlign(latexCode) {
       if (sameLineClose) {
         const content = sameLineClose[1].trim();
         const trailing = sameLineClose[2].trim();
-        output.push(`${indent}\\begin{align*}`);
+        output.push(`${indent}\\begin{align}`);
         if (content) output.push(`${indent}  ${content}`);
-        output.push(trailing ? `${indent}\\end{align*} ${trailing}` : `${indent}\\end{align*}`);
+        output.push(trailing ? `${indent}\\end{align} ${trailing}` : `${indent}\\end{align}`);
         i += 1;
         continue;
       }
@@ -67,9 +67,9 @@ export function convertEquationToAlign(latexCode) {
           const before = closeMatch[1];
           const trailing = closeMatch[2].trim();
           if (before.trim()) innerLines.push(before.trimEnd());
-          output.push(`${indent}\\begin{align*}`);
+          output.push(`${indent}\\begin{align}`);
           output.push(...innerLines);
-          output.push(trailing ? `${indent}\\end{align*} ${trailing}` : `${indent}\\end{align*}`);
+          output.push(trailing ? `${indent}\\end{align} ${trailing}` : `${indent}\\end{align}`);
           i = j + 1;
           found = true;
           break;

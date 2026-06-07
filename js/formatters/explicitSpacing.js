@@ -62,11 +62,11 @@ function formatMathExpressionSpacing(mathExpression, isDisplayMath) {
   out = out.replace(/&\s*=\s*/g, "& \\ = \\ ");
   out = out.replace(/\s*=\s*&/g, " \\ = \\ &");
 
+  // Explicit spacing is only applied around statement separators (relational
+  // operators). Arithmetic operators such as + and - are left untouched.
   out = out.replace(/([0-9A-Za-z)\]}\|])\s*=\s*([0-9A-Za-z\\(\{\[\|])/g, "$1 \\ = \\ $2");
   out = out.replace(/([0-9A-Za-z)\]}\|])\s*<\s*([0-9A-Za-z\\(\{\[\|])/g, "$1 \\ < \\ $2");
   out = out.replace(/([0-9A-Za-z)\]}\|])\s*>\s*([0-9A-Za-z\\(\{\[\|])/g, "$1 \\ > \\ $2");
-  out = out.replace(/([0-9A-Za-z)\]}\|])\s*\+\s*([0-9A-Za-z\\(\{\[\|])/g, "$1 \\ + \\ $2");
-  out = out.replace(/([0-9A-Za-z)\]}\|])\s*-\s*([0-9A-Za-z\\(\{\[\|])/g, "$1 \\ - \\ $2");
 
   out = out.replace(/\s*\\cdot\s*/g, " \\cdot ");
   out = out.replace(/\s*\\oplus\s*/g, " \\oplus ");
