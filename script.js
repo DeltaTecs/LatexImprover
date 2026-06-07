@@ -9,6 +9,7 @@ import { applyEnDashNames } from "./js/formatters/enDashNames.js";
 import { applyExplicitSpacing } from "./js/formatters/explicitSpacing.js";
 import { markEquationContent } from "./js/formatters/equationContentMark.js";
 import { relabelLatex } from "./js/formatters/labeling.js";
+import { convertEquationToAlign } from "./js/formatters/equationToAlign.js";
 
 const editorHost = document.getElementById("latexEditor");
 const operationSelect = document.getElementById("operationSelect");
@@ -106,6 +107,11 @@ formatButton.addEventListener("click", () => {
 
   if (selected === "en-dash-names") {
     applyEditorTransform(applyEnDashNames, "En-dash name compounds applied to the text.");
+    return;
+  }
+
+  if (selected === "equation-to-align") {
+    applyEditorTransform(convertEquationToAlign, "Equation environments converted to align.");
     return;
   }
 

@@ -1,4 +1,4 @@
-const EXPLICIT_SPACING_BLOCK_ENVS = "(align\\*?|equation\\*?|gather\\*?|multline\\*?|split|cases)";
+const EXPLICIT_SPACING_BLOCK_ENVS = "(align\\*?)";
 
 function splitUnescapedComment(line) {
   for (let i = 0; i < line.length; i += 1) {
@@ -141,72 +141,7 @@ function replaceDisplayMathBlocks(text) {
   });
 }
 
-function protectFormattedDisplayBlocks(text) {
-  const storedBlocks = [];
-  const formatted = replaceDisplayMathBlocks(text);
-  const blockPattern = new RegExp(
-    `\\\\begin\\{${EXPLICIT_SPACING_BLOCK_ENVS}\\}([\\s\\S]*?)\\\\end\\{\\1\\}`,
-    "g"
-  );
-
-  const protectedText = formatted.replace(blockPattern, (blockMatch) => {
-    const token = `@@DISPLAY_BLOCK_${storedBlocks.length}@@`;
-    storedBlocks.push(blockMatch);
-    return token;
-  });
-
-  return { protectedText, storedBlocks };
-}
-
-function replaceInlineMath(text) {
-  let out = text;
-  out = out.replace(/\\\(([\s\S]*?)\\\)/g, (_m, inner) => `\\(${formatMathChunkPreservingComments(inner, false)}\\)`);
-  out = out.replace(/\\\[([\s\S]*?)\\\]/g, (_m, inner) => `\\[${formatMathChunkPreservingComments(inner, true)}\\]`);
-
-  let rebuilt = "";
-  let i = 0;
-  let inInlineDollar = false;
-  let currentMath = "";
-
-  while (i < out.length) {
-    const char = out[i];
-    const next = out[i + 1];
-    const prev = out[i - 1];
-
-    if (char === "$" && prev !== "\\" && next !== "$") {
-      if (inInlineDollar) {
-        rebuilt += `${formatMathChunkPreservingComments(currentMath, false)}$`;
-        currentMath = "";
-        inInlineDollar = false;
-      } else {
-        inInlineDollar = true;
-        rebuilt += "$";
-      }
-      i += 1;
-      continue;
-    }
-
-    if (inInlineDollar) {
-      currentMath += char;
-    } else {
-      rebuilt += char;
-    }
-
-    i += 1;
-  }
-
-  if (inInlineDollar) {
-    rebuilt += currentMath;
-  }
-
-  return rebuilt;
-}
-
 export function applyExplicitSpacing(latexCode) {
   const normalized = latexCode.replace(/\r\n/g, "\n");
-  const protectedBlocks = protectFormattedDisplayBlocks(normalized);
-  const inlineFormatted = replaceInlineMath(protectedBlocks.protectedText);
-  return inlineFormatted.replace(/@@DISPLAY_BLOCK_(\d+)@@/g, (_m, index) => {
-    return protectedBlocks.storedBlocks[Number(index)] ?? _m;
-  });
+  return replaceDisplayMathBlocks(normalized);
 }
