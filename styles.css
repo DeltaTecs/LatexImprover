@@ -284,6 +284,23 @@ button:hover {
   background: var(--accent-hover);
 }
 
+.scroll-top-button {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 30;
+  display: none;
+  align-items: center;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.85rem;
+  border-radius: 999px;
+  box-shadow: 0 8px 20px rgba(20, 45, 90, 0.22);
+}
+
+.scroll-top-button.is-visible {
+  display: inline-flex;
+}
+
 .help-dialog {
   width: min(520px, calc(100vw - 2rem));
   border: 1px solid var(--border);

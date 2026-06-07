@@ -25,6 +25,7 @@ const downloadButton = document.getElementById("downloadButton");
 const helpButton = document.getElementById("helpButton");
 const helpDialog = document.getElementById("helpDialog");
 const helpCloseButton = document.getElementById("helpCloseButton");
+const scrollTopButton = document.getElementById("scrollTopButton");
 
 const chkEnDashNames = document.getElementById("chk-en-dash-names");
 const chkEquationContentMark = document.getElementById("chk-equation-content-mark");
@@ -233,3 +234,22 @@ downloadButton.addEventListener("click", () => {
   URL.revokeObjectURL(url);
   statusMessage.textContent = "Downloaded output file.";
 });
+
+function updateScrollTopVisibility() {
+  if (!scrollTopButton) {
+    return;
+  }
+
+  const pageOverflows = document.documentElement.scrollHeight > window.innerHeight + 1;
+  scrollTopButton.classList.toggle("is-visible", pageOverflows);
+}
+
+if (scrollTopButton) {
+  scrollTopButton.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  window.addEventListener("resize", updateScrollTopVisibility);
+  window.addEventListener("scroll", updateScrollTopVisibility, { passive: true });
+  updateScrollTopVisibility();
+}
